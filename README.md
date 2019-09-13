@@ -58,6 +58,63 @@ Use a main.tf to create some test config, such as
      "flamingo"
    ]
  }
+
+ resource "wavefront_dashboard" "test_dashboard" {
+   name = "Terraform Test Dash" (required)
+   query = "percentile(95, rate(ts(outreach.flagship.app_controller_service_time_ms_sum, controller=\"Twilio::CallsController\")))" (required)
+   disabled = "false" (optional)
+				"scatter_plot_source": {
+					Type:     schema.TypeString,
+					Optional: true,
+					Default:  "Y",
+				},
+				"query_builder_enabled": {
+					Type:        schema.TypeBool,
+					Optional:    true,
+					Description: "Whether the query builder should be enabled",
+				},
+				"source_description": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "Description of the source",
+				},
+ }
+
+resource "wavefront_dashboard" "wavefront_terraform_test" {
+
+  name        = "Terraform Example Dashboard"
+  description = "This was created via terraform"
+  url         = "terraform-test-dash"
+  section {
+    name = "Response times"
+    row {
+      chart {
+        name = "Controller response times"
+        source {
+          name = ""
+          query = "percentile(95, merge(hs(outreach.flagship.app_controller_service_time_ms.m, environment=\"$${environment}\" and bento=\"$${bento}\"), controller, action))"
+        }
+        units         = "ms"
+        summarization = "MEAN"
+        chart_setting {
+          type = "line"
+        }
+      }
+      chart {
+        name = "By channel"
+        source {
+          name = ""
+          query = "percentile(95, merge(hs(outreach.flagship.app_controller_service_time_ms.m, environment=\"$${environment}\" and bento=\"$${bento}\"), channel))"
+        }
+        units         = "ms"
+        summarization = "MEAN"
+        chart_setting {
+          type = "line"
+        }
+      }
+    }
+  }
+}
 ```
 
 Export your wavefront token `export WAVEFRONT_TOKEN=<token>` You could also configure the `token` in the provider section of main.tf, but best not to.
